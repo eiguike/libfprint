@@ -394,6 +394,9 @@ int fpi_img_compare_print_data_to_gallery(struct fp_print_data *print,
 	int r;
 	GSList *list_item;
 
+  int offset = 0;
+  int max_score = 0;
+
 	if (g_slist_length(print->prints) != 1) {
 		fp_err("new_print contains more than one sample, is it enrolled print?");
 		return -EINVAL;
@@ -410,12 +413,21 @@ int fpi_img_compare_print_data_to_gallery(struct fp_print_data *print,
 			gstruct = (struct xyt_struct *)data_item->data;
 			r = bozorth_to_gallery(probe_len, pstruct, gstruct);
 			if (r >= match_threshold) {
-				*match_offset = i - 1;
-				return FP_VERIFY_MATCH;
+        if (r > max_score) {
+          max_score = r;
+          offset = i - 1;
+          //printf("MATCH_THRESHOLD %d SCORE %d OFFSET: %d\n", match_threshold, r, offset);
+        }
 			}
 			list_item = g_slist_next(list_item);
 		} while (list_item);
 	}
+  if (max_score > 0) {
+    //printf("MAX SCORE: %d\n", max_score);
+    *match_offset = offset;
+    return FP_VERIFY_MATCH;
+  }
+
 	return FP_VERIFY_NO_MATCH;
 }
 
